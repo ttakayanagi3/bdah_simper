@@ -55,7 +55,7 @@ def batched_arbitrary_speed(frames, num_diff_speeds, speed_range, opt):
 
     batched_frames = torch.stack([frames] * num_diff_speeds * 2)
 
-    arbitrary_speed_subsample(batched_frames, random_speeds, opt)
+    batched_adjusted_frames = arbitrary_speed_subsample(batched_frames, random_speeds, opt)
 
     return random_speeds
 
@@ -63,42 +63,27 @@ def batched_arbitrary_speed(frames, num_diff_speeds, speed_range, opt):
 def arbitrary_speed_subsample(frames, speed, opt):
     frame_len = frames.shape[1]
     interp_frames = []
+    extract_time_frames_length = 50
     for i, each_speed in enumerate(speed):
-        frame = frames[i].unsqueeze(0).unsqueeze(0)
+        frame = frames[i].view(frame_len, -1).T.unsqueeze(0)
         target_frame_len = int(frame_len // each_speed)
-        target_output_size = (target_frame_len, opt.IMG_SIZE, opt.IMG_SIZE)
-        frame_numpy = frame.numpy()
-        interp_frame = F2.interpolate(frame, size=target_output_size, mode='trilinear')
-        interp_frame_numpy = interp_frame.squeeze().numpy()
-        interp_frames.append(interp_frame.squeeze())
-    return interp_frames
+        target_output_size = target_frame_len
+        interp_frame = F2.interpolate(frame, size=target_output_size, mode='linear')
+        if opt.DEBUG == 1:
+            frame_numpy = frame.numpy()
+            interp_frame_numpy = interp_frame.squeeze().numpy()
+            interp_frame_numpy = interp_frame_numpy.T.reshape(-1, 28, 28)
+        #
+        # reshape (784, adjusted time frames) -> (adjusted time frame, 28, 28)
+        #
+        interp_frame = interp_frame.squeeze().T.reshape(-1, opt.IMG_SIZE, opt.IMG_SIZE)
+        #
+        # extract first 50 frames
+        #
+        interp_frames.append(interp_frame[:extract_time_frames_length, :, :])
+    interp_frames_t = torch.stack(interp_frames)
+    return interp_frames_t
 
-# def arbitrary_speed_subsample(frames, speed, opt):
-#     frame_len = frames.shape[1]
-#     speed_size = speed.shape[0]
-#     frame_len_t = torch.FloatTensor([frame_len] * speed_size)
-#     speed_t = torch.FloatTensor(speed)
-#     speed_temp = torch.where(speed_t > 1, speed_t, 1)
-#     max_frame_len = torch.floor_divide(frame_len_t, speed_temp)
-#     x_ref = []
-#     for i, each_speed in enumerate(speed):
-#         each_frame = frames[i]
-#         each_frame_numpy = each_frame.numpy()
-#         x_ref_ = torch.range(0, each_speed * (frame_len - 0.5), each_speed, dtype=torch.float32)
-#         print(x_ref_.size(0))
-#         x_ref_ = torch.stack([x_ref_] * opt.IMG_SIZE * opt.IMG_SIZE * opt.CHANNELS)
-#         x_ref_input = x_ref_.float()
-#         x_input = torch.range(0, frame_len-0.5, dtype=torch.float32)
-#         x_input = torch.stack([x_input] * opt.IMG_SIZE * opt.IMG_SIZE * opt.CHANNELS).float()
-#         y_input = each_frame.view(frame_len, -1).T.float()
-#         y_ref = torch.empty_like(y_input).float()
-#         interp1d(x_input, y_input, x_ref_input, y_ref)
-#         x_ref.append(x_ref_)
-#         y_cpu = y_ref.cpu().numpy().reshape(frame_len, 28, 28)
-#
-#     x_ref = torch.stack(x_ref)
-#     print('temp')
-#     return
 
 def transform_simper(frames, opt):
     num_diff_speeds = opt.NUM_SELF_CON_SIMPER

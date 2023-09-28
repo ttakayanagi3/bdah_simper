@@ -64,6 +64,7 @@ def main():
     parser.add_argument("--SSL_FRAMES", type=int, default=NUM_FRAMES // MAX_SPEED)
     parser.add_argument("--IMG_SIZE", type=int, default=IMG_SIZE)
     parser.add_argument("--CHANNELS", type=int, default=CHANNELS)
+    parser.add_argument("--DEBUG", type=int, default=1)
 
     opt = parser.parse_args()
     print(opt)
