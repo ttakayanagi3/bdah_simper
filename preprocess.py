@@ -30,7 +30,8 @@ def gen_rotating_samples(x, y, opt):
     new_x = []
     for i in range(NUM_FRAMES):
         x_ = x.unsqueeze(0)
-        x_rotate = F.rotate(x_, angles[i] * np.pi / 180.0)
+        # x_rotate = F.rotate(x_, angles[i] * np.pi / 180.0)
+        x_rotate = F.rotate(x_, angles[i])
         x_rotate = x_rotate.numpy()
         new_x.append(x_rotate)
 
@@ -66,7 +67,9 @@ def arbitrary_speed_subsample(frames, speed, opt):
         frame = frames[i].unsqueeze(0).unsqueeze(0)
         target_frame_len = int(frame_len // each_speed)
         target_output_size = (target_frame_len, opt.IMG_SIZE, opt.IMG_SIZE)
+        frame_numpy = frame.numpy()
         interp_frame = F2.interpolate(frame, size=target_output_size, mode='trilinear')
+        interp_frame_numpy = interp_frame.squeeze().numpy()
         interp_frames.append(interp_frame.squeeze())
     return interp_frames
 

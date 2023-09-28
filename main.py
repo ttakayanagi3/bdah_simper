@@ -7,10 +7,6 @@ from torch.utils.data import Dataset, DataLoader
 
 import preprocess as p
 
-# class CustomDataset(Dataset):
-#     def __init__(self):
-
-
 
 def load_mnist(opt, train_dype='train', base_dir='./data', need_sampling=True,
                data_size=1000):
@@ -69,20 +65,8 @@ def main():
     parser.add_argument("--IMG_SIZE", type=int, default=IMG_SIZE)
     parser.add_argument("--CHANNELS", type=int, default=CHANNELS)
 
-
-    # parser.add_argument("--lr", type=float, default=0.001, help="learning rate")
-    # parser.add_argument("--b1", type=float, default=0.5, help="hyper parameter of adam")
-    # parser.add_argument("--b2", type=float, default=0.999, help="hyper parameter of adam")
-    # parser.add_argument("--in_channels", type=int, default=3, help="number of in channels")
-    # parser.add_argument("--param_file", type=str, default="./params/Generator_108.pth", help="parameter file for load")
-    # parser.add_argument("--phase", type=str, default="test", help="phase of model")
-    # parser.add_argument("--eval_epochs", type=int, default=10, help="evaluation period")
-    # parser.add_argument("--model_name", type=str, default="simple-cnn", help="model name for tensor board file")
-    # parser.add_argument("--file_name", type=str, default="", help="file name to read")
-    # parser.add_argument("--out_dir", type=str, default="./learning_process", help="directory name for output")
     opt = parser.parse_args()
     print(opt)
-
 
     train_data, train_label, train_freq = load_mnist(opt, train_dype='train')
     dataset = p.CustomDataset(train_data, train_label, train_freq, opt)
