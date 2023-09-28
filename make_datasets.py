@@ -53,6 +53,8 @@ def main():
     LENGTH_SEC = 5
     NUM_FRAMES = FPS * LENGTH_SEC
     MAX_SPEED = 3
+    IMG_SIZE = 28
+    CHANNELS = 1
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--min_freq", type=float, default=0.5, help="minimum frequency")
@@ -64,6 +66,8 @@ def main():
     parser.add_argument("--NUM_SELF_CON_SIMPER", type=int, default=10)
     parser.add_argument("--MAX_SPEED", type=int, default=MAX_SPEED)
     parser.add_argument("--SSL_FRAMES", type=int, default=NUM_FRAMES // MAX_SPEED)
+    parser.add_argument("--IMG_SIZE", type=int, default=IMG_SIZE)
+    parser.add_argument("--CHANNELS", type=int, default=CHANNELS)
 
 
     # parser.add_argument("--lr", type=float, default=0.001, help="learning rate")
