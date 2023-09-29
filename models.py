@@ -32,6 +32,33 @@ class Featurizer(nn.Module):
         return x
 
 
+class MLP(nn.Module):
+    def __init__(self, n_outputs):
+        super(MLP, self).__init__()
+        self.inputs = nn.Linear(n_outputs, n_outputs)
+        self.hidden = nn.Linear(n_outputs, n_outputs)
+        self.outputs = nn.Linear(n_outputs, n_outputs)
+
+    def forward(self, x):
+        x = F.relu(self.inputs(x))
+        # x = F.relu(self.hidden(x)) # commented out as in original
+        x = self.outputs(x)
+        return x
+
+
+def Classifier(in_features, out_features, nonlinear=False):
+    if nonlinear:
+        return nn.Sequential(
+            nn.Linear(in_features, in_features // 2),
+            nn.ReLU(),
+            nn.Linear(in_features // 2, in_features // 4),
+            nn.ReLU(),
+            nn.Linear(in_features // 4, out_features)
+        )
+    else:
+        return nn.Linear(in_features, out_features)
+
+
 if __name__ == '__main__':
     batch_size = 16
     sequence = 5
