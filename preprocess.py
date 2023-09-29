@@ -1,8 +1,11 @@
+import random
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torchvision.transforms.functional as F
 import torch.nn.functional as F2
+from torchvision import transforms as tr
 
 from torch.utils.data import Dataset, DataLoader
 # from torchinterp1d import interp1d
@@ -57,7 +60,7 @@ def batched_arbitrary_speed(frames, num_diff_speeds, speed_range, opt):
 
     batched_adjusted_frames = arbitrary_speed_subsample(batched_frames, random_speeds, opt)
 
-    return random_speeds
+    return batched_adjusted_frames, random_speeds
 
 
 def arbitrary_speed_subsample(frames, speed, opt):
@@ -88,13 +91,45 @@ def arbitrary_speed_subsample(frames, speed, opt):
 def transform_simper(frames, opt):
     num_diff_speeds = opt.NUM_SELF_CON_SIMPER
     speed_range = (0.5, opt.MAX_SPEED)
+    #
+    # temporal variant augmentation
+    #
+    different_speed_batched_frames, random_speeds = batched_arbitrary_speed(frames, num_diff_speeds, speed_range, opt)
+    #
+    # temporal invariant augmentation
+    #
+    random_crop = tr.RandomResizedCrop(size=(28, 28))
+    random_jitter = tr.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5)
+    random_horizontal_flip = tr.RandomHorizontalFlip(p=1)
+    gaussian_blur = tr.GaussianBlur(kernel_size=(3, 3))
+    batched_transformed_frames = []
+    for batched_frames in different_speed_batched_frames:
+        p_random_crop = random.random()
+        p_jitter = random.random()
+        p_horizontal_flip = random.random()
+        p_blur = random.random()
+        transformed_frames = []
+        for frame in batched_frames:
+            #
+            # need to add Channel dimension
+            #
+            frame_ = frame.unsqueeze(0)
+            #
+            # apply temporal variant transformation randomly
+            #
+            if p_random_crop > 0.5:
+                frame_ = random_crop(frame_)
+            if p_jitter > 0.5:
+                frame_ = random_jitter(frame_)
+            if p_horizontal_flip > 0.5:
+                frame_ = random_horizontal_flip(frame_)
+            if p_blur > 0.5:
+                frame_ = gaussian_blur(frame_)
 
-    temp = batched_arbitrary_speed(frames, num_diff_speeds, speed_range, opt)
-
-
-
-    pass
-
+            transformed_frames.append(frame_)
+        batched_transformed_frames.append(torch.stack(transformed_frames))
+    batched_transformed_frames_t = torch.stack(batched_transformed_frames)
+    return batched_transformed_frames_t, random_speeds
 
 
 class CustomDataset(Dataset):
@@ -118,8 +153,8 @@ class CustomDataset(Dataset):
         #
         # transform
         #
-        _ = transform_simper(X, self.opt)
+        X, speed = transform_simper(X, self.opt)
 
-        return X, y_label, y_angle
+        return X, speed, y_angle
 
 

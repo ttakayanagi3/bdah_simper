@@ -58,7 +58,7 @@ def main():
     parser.add_argument("--random_phase", type=int, default=1, help="1: apply random phase, 0: default")
     parser.add_argument("--FPS", type=int, default=FPS)
     parser.add_argument("--LENGTH_SEC", type=int, default=LENGTH_SEC)
-    parser.add_argument("--batch_size", type=int, default=32, help="size of mini-batches")
+    parser.add_argument("--batch_size", type=int, default=4, help="size of mini-batches")
     parser.add_argument("--NUM_SELF_CON_SIMPER", type=int, default=10)
     parser.add_argument("--MAX_SPEED", type=int, default=MAX_SPEED)
     parser.add_argument("--SSL_FRAMES", type=int, default=NUM_FRAMES // MAX_SPEED)
@@ -74,7 +74,6 @@ def main():
     dataloader = DataLoader(dataset=dataset, batch_size=opt.batch_size)
     data_iter = iter(dataloader)
     x, y_label, y_angle = next(data_iter)
-    # train_data = p.preprocessing(train_data, train_freq, opt)
     print('complete')
     return
 #
