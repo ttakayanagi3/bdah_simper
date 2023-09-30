@@ -6,7 +6,8 @@ from torchvision import datasets as ds
 from torch.utils.data import Dataset, DataLoader
 
 import preprocess as p
-
+import models as m
+import metrics as me
 
 def load_mnist(opt, train_dype='train', base_dir='./data', need_sampling=True,
                data_size=1000):
@@ -64,7 +65,12 @@ def main():
     parser.add_argument("--SSL_FRAMES", type=int, default=NUM_FRAMES // MAX_SPEED)
     parser.add_argument("--IMG_SIZE", type=int, default=IMG_SIZE)
     parser.add_argument("--CHANNELS", type=int, default=CHANNELS)
+    parser.add_argument("--lr", type=float, default=1e-3, help="Learning Rate")
     parser.add_argument("--DEBUG", type=int, default=1)
+    #
+    #
+    parser.add_argument("--label_dist_fn", type=str, default='l1')
+    parser.add_argument("--label_temperature", type=float, default=0.1)
 
     opt = parser.parse_args()
     print(opt)
@@ -72,8 +78,38 @@ def main():
     train_data, train_label, train_freq = load_mnist(opt, train_dype='train')
     dataset = p.CustomDataset(train_data, train_label, train_freq, opt)
     dataloader = DataLoader(dataset=dataset, batch_size=opt.batch_size)
-    data_iter = iter(dataloader)
-    x, y_label, y_angle = next(data_iter)
+    model = m.SimPer(opt)
+    if opt.DEBUG == 1:
+        data_iter = iter(dataloader)
+        frames, all_speed, y_angle = next(data_iter)
+        #
+        # split all speed
+        # 2 * M -> M, M
+        #
+        num_arguments = frames.shape[1]
+        half_of_num_arguments = int(num_arguments // 2)
+        all_speed1 = all_speed[:, :half_of_num_arguments]
+        all_speed2 = all_speed[:, half_of_num_arguments:]
+        #
+        # label distance
+        #
+        all_labels = me.label_distance(all_speed1, all_speed2,
+                                       opt.label_dist_fn, opt.label_temperature)
+        mini_batch_size = frames.shape[0]
+        shape = frames.shape[2:]
+        transform_shape = (mini_batch_size * num_arguments, *shape)
+        frames_transformed = frames.view(transform_shape)
+        all_z = model(frames_transformed, 'f')
+        all_z = all_z.view(mini_batch_size, num_arguments, -1)
+
+        for feats, labels in zip(all_z, all_labels):
+            print(feats, labels)
+
+
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=opt.lr)
+
+
     print('complete')
     return
 #

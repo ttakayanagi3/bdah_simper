@@ -113,22 +113,27 @@ def transform_simper(frames, opt):
             #
             # need to add Channel dimension
             #
-            frame_ = frame.unsqueeze(0)
+            frame = frame.unsqueeze(0)
             #
             # apply temporal variant transformation randomly
             #
             if p_random_crop > 0.5:
-                frame_ = random_crop(frame_)
+                frame = random_crop(frame)
             if p_jitter > 0.5:
-                frame_ = random_jitter(frame_)
+                frame = random_jitter(frame)
             if p_horizontal_flip > 0.5:
-                frame_ = random_horizontal_flip(frame_)
+                frame = random_horizontal_flip(frame)
             if p_blur > 0.5:
-                frame_ = gaussian_blur(frame_)
+                frame = gaussian_blur(frame)
 
-            transformed_frames.append(frame_)
+            transformed_frames.append(frame)
         batched_transformed_frames.append(torch.stack(transformed_frames))
     batched_transformed_frames_t = torch.stack(batched_transformed_frames)
+    #
+    # insert Channel dimension
+    #
+    batched_transformed_frames_t = batched_transformed_frames_t.permute(0, 2, 1, 3, 4)
+
     return batched_transformed_frames_t, random_speeds
 
 

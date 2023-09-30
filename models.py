@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 
 class Featurizer(nn.Module):
-    def __init__(self):
+    def __init__(self, n_outputs):
         super(Featurizer, self).__init__()
         self.conv0 = nn.Conv3d(1, 64, (5, 3, 3), padding=(2, 1, 1))
         self.conv1 = nn.Conv3d(64, 128, (5, 3, 3), padding=(2, 1, 1))
@@ -22,6 +22,8 @@ class Featurizer(nn.Module):
         self.pool3 = nn.AdaptiveAvgPool3d((1, 1, 1))
 
         self.flatten = nn.Flatten()
+
+        self.n_outputs = n_outputs
 
     def forward(self, x):
         x = self.pool0(F.relu(self.bn0(self.conv0(x))))
@@ -59,14 +61,29 @@ def Classifier(in_features, out_features, nonlinear=False):
         return nn.Linear(in_features, out_features)
 
 
+class SimPer(nn.Module):
+    def __init__(self, opt):
+        super(SimPer, self).__init__()
+        self.featurizer = Featurizer(opt.SSL_FRAMES)
+        self.reg = Classifier(1, 1, False)
+        self.network = nn.Sequential(*[self.featurizer, self.reg])
+
+    def forward(self, x, inference='f'):
+        if inference == 'f':
+            out = self.featurizer(x)
+        else:
+            out = self.network(x)
+        return out
+
+
 if __name__ == '__main__':
     batch_size = 16
     sequence = 5
     img_size = 16
     channels = 1
-    shape = (8, 1, 10, 20, 20)
+    shape = (batch_size, channels, sequence, img_size, img_size)
     x = torch.randn(shape)
     # 8 is the batch size here, and the input has a depth of 10, height and width of 20.
-    model = Featurizer()
+    model = Featurizer(n_outputs=50)
     out = model(x)
     print(out)
