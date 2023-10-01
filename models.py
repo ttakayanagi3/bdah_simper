@@ -16,22 +16,54 @@ class Featurizer(nn.Module):
         self.bn2 = nn.BatchNorm3d(128)
         self.bn3 = nn.BatchNorm3d(1)
 
-        self.pool0 = nn.MaxPool3d((1, 2, 2))
-        self.pool1 = nn.MaxPool3d((1, 2, 2))
-        self.pool2 = nn.MaxPool3d((1, 2, 2))
-        self.pool3 = nn.AdaptiveAvgPool3d((1, 1, 1))
+        # self.pool0 = nn.MaxPool3d((1, 2, 2))
+        # self.pool1 = nn.MaxPool3d((1, 2, 2))
+        # self.pool2 = nn.MaxPool3d((1, 2, 2))
+        # self.pool3 = nn.AdaptiveAvgPool3d((1, 1, 1))
+        self.pool0 = nn.MaxPool2d((2, 2))
+        self.pool1 = nn.MaxPool2d((2, 2))
+        self.pool2 = nn.MaxPool2d((2, 2))
+        self.pool3 = nn.AdaptiveAvgPool2d((1, 1))
 
         self.flatten = nn.Flatten()
 
         self.n_outputs = n_outputs
 
+    # def forward(self, x):
+    #     x = self.pool0(F.relu(self.bn0(self.conv0(x))))
+    #     x = self.pool1(F.relu(self.bn1(self.conv1(x))))
+    #     # x = self.pool2(F.relu(self.bn2(self.conv2(x)))) # commented out as in original
+    #     x = self.pool3(F.relu(self.bn3(self.conv3(x))))
+    #     x = self.flatten(x)
+    #     return x
+
     def forward(self, x):
-        x = self.pool0(F.relu(self.bn0(self.conv0(x))))
-        x = self.pool1(F.relu(self.bn1(self.conv1(x))))
-        # x = self.pool2(F.relu(self.bn2(self.conv2(x)))) # commented out as in original
-        x = self.pool3(F.relu(self.bn3(self.conv3(x))))
+        x = F.relu(self.bn0(self.conv0(x)))
+        x = self.time_distributed(x, self.pool0)
+
+        x = F.relu(self.bn1(self.conv1(x)))
+        x = self.time_distributed(x, self.pool1)
+
+        x = F.relu(self.bn3(self.conv3(x)))
+        x = self.time_distributed(x, self.pool3)
+
         x = self.flatten(x)
         return x
+
+    def time_distributed(self, x, layer):
+        channels = x.shape[1]
+        sequence = x.shape[2]
+        img_size = x.shape[3:]
+
+        new_order = (0, 2, 1, 3, 4)
+        x_trans = x.permute(new_order)
+        new_shape = (channels, img_size[0], img_size[1])
+        x_trans = x_trans.reshape(-1, *new_shape)
+        out = layer(x_trans)
+        img_size = out.shape[2:]
+        out = out.reshape(-1, sequence, channels, img_size[0], img_size[1])
+        out = out.permute(0, 2, 1, 3, 4)
+        return out
 
 
 class MLP(nn.Module):

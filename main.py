@@ -70,6 +70,7 @@ def main():
     #
     #
     parser.add_argument("--label_dist_fn", type=str, default='l1')
+    parser.add_argument("--feat_dist_fn", type=str, default='max_corr')
     parser.add_argument("--label_temperature", type=float, default=0.1)
 
     opt = parser.parse_args()
@@ -104,6 +105,10 @@ def main():
 
         for feats, labels in zip(all_z, all_labels):
             print(feats, labels)
+            feat1 = feats[:half_of_num_arguments]
+            feat2 = feats[half_of_num_arguments:]
+            if opt.feat_dist_fn == 'max_corr':
+                feat_dist = me.max_cross_corr(feat1, feat2)
 
 
     criterion = nn.CrossEntropyLoss()
