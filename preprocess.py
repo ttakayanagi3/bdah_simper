@@ -88,13 +88,15 @@ def arbitrary_speed_subsample(frames, speed, opt):
     return interp_frames_t
 
 
-def transform_simper(frames, opt):
+def transform_simper(frames, opt, debug=False):
     num_diff_speeds = opt.NUM_SELF_CON_SIMPER
     speed_range = (0.5, opt.MAX_SPEED)
     #
     # temporal variant augmentation
     #
     different_speed_batched_frames, random_speeds = batched_arbitrary_speed(frames, num_diff_speeds, speed_range, opt)
+    if debug:
+        return different_speed_batched_frames, random_speeds
     #
     # temporal invariant augmentation
     #
@@ -138,11 +140,16 @@ def transform_simper(frames, opt):
 
 
 class CustomDataset(Dataset):
-    def __init__(self, X, y_label, y_freq, opt):
+    def __init__(self, X, y_label, y_freq, opt,
+                 need_preprocess=True, need_transform=True, debug=False):
         self.X = X
         self.y_label = y_label
         self.y_freq = y_freq
         self.opt = opt
+        self.need_preprocess = need_preprocess
+        self.need_transform = need_transform
+        self.debug = debug
+        print(f'debug_mode: {self.debug}')
 
     def __len__(self):
         return len(self.y_label)
@@ -154,11 +161,20 @@ class CustomDataset(Dataset):
         #
         # rescale & rotation & clip
         #
-        X, y_angle = preprocessing(X, y_freq, self.opt)
+        if self.need_preprocess:
+            X, y_angle = preprocessing(X, y_freq, self.opt)
+        else:
+            # dummy
+            y_angle = np.array([1])
         #
         # transform
         #
-        X, speed = transform_simper(X, self.opt)
+        if self.need_transform:
+            # X, speed = transform_simper(X, self.opt)
+            X, speed = transform_simper(X, self.opt, debug=self.debug)
+        else:
+            # dummy
+            speed = np.array([1])
 
         return X, speed, y_angle
 

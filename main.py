@@ -12,6 +12,8 @@ import models as m
 import metrics as me
 import trainer as t
 
+os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
+
 
 def load_mnist(opt, train_dype='train', base_dir='./data', need_sampling=True,
                data_size=1000):
@@ -83,11 +85,22 @@ def main():
 
     train_data, train_label, train_freq = load_mnist(opt, train_dype='train')
     dataset = p.CustomDataset(train_data, train_label, train_freq, opt)
+    # dataset = p.CustomDataset(train_data, train_label, train_freq, opt, debug=True)
     data_loader = DataLoader(dataset=dataset, batch_size=opt.batch_size)
     model = m.SimPer(opt)
     if opt.DEBUG == 1:
-        data_iter = iter(dataloader)
+        import seaborn as sns
+        import matplotlib.pyplot as plt
+        need_visualize = False
+
+        data_iter = iter(data_loader)
         frames, all_speed, y_angle = next(data_iter)
+        if need_visualize:
+            frames_numpy = frames.numpy()[0, 0]
+            for i in range(5):
+                sns.heatmap(frames_numpy[i])
+                plt.show()
+
         #
         # split all speed
         # 2 * M -> M, M
