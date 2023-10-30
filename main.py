@@ -66,14 +66,17 @@ def main():
     parser.add_argument("--FPS", type=int, default=FPS)
     parser.add_argument("--LENGTH_SEC", type=int, default=LENGTH_SEC)
     parser.add_argument("--batch_size", type=int, default=4, help="size of mini-batches")
-    parser.add_argument("--n_epochs", type=int, default=10, help="epochs")
+    parser.add_argument("--n_epochs", type=int, default=15, help="epochs")
     parser.add_argument("--NUM_SELF_CON_SIMPER", type=int, default=10)
     parser.add_argument("--MAX_SPEED", type=int, default=MAX_SPEED)
     parser.add_argument("--SSL_FRAMES", type=int, default=NUM_FRAMES // MAX_SPEED)
     parser.add_argument("--IMG_SIZE", type=int, default=IMG_SIZE)
     parser.add_argument("--CHANNELS", type=int, default=CHANNELS)
-    parser.add_argument("--lr", type=float, default=1e-3, help="Learning Rate")
+    parser.add_argument("--lr", type=float, default=2e-3, help="Learning Rate")
     parser.add_argument("--DEBUG", type=int, default=0)
+    parser.add_argument("--num_workers", type=int, default=1)
+    parser.add_argument("--experiment_name", type=str, default='SimPer_exp1')
+
     #
     #
     parser.add_argument("--label_dist_fn", type=str, default='l1')
@@ -86,8 +89,17 @@ def main():
     train_data, train_label, train_freq = load_mnist(opt, train_dype='train')
     dataset = p.CustomDataset(train_data, train_label, train_freq, opt)
     # dataset = p.CustomDataset(train_data, train_label, train_freq, opt, debug=True)
-    data_loader = DataLoader(dataset=dataset, batch_size=opt.batch_size)
+    # data_loader = DataLoader(dataset=dataset, batch_size=opt.batch_size)
+    data_loader = DataLoader(dataset=dataset, batch_size=opt.batch_size, num_workers=opt.num_workers,
+                             pin_memory=True)
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cpu")
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
+
     model = m.SimPer(opt)
+    model.to(device)
     if opt.DEBUG == 1:
         import seaborn as sns
         import matplotlib.pyplot as plt
@@ -112,27 +124,26 @@ def main():
         #
         # label distance
         #
-        all_labels = me.label_distance(all_speed1, all_speed2,
+        all_labels, label_index = me.label_distance(all_speed1, all_speed2,
                                        opt.label_dist_fn, opt.label_temperature)
         mini_batch_size = frames.shape[0]
         shape = frames.shape[2:]
         transform_shape = (mini_batch_size * num_arguments, *shape)
         frames_transformed = frames.view(transform_shape)
+        frames_transformed = frames_transformed.to(device)
         all_z = model(frames_transformed, 'f')
         all_z = all_z.view(mini_batch_size, num_arguments, -1)
 
         for feats, labels in zip(all_z, all_labels):
-            print(feats, labels)
+            # print(feats, labels)
             feat1 = feats[:half_of_num_arguments]
             feat2 = feats[half_of_num_arguments:]
             if opt.feat_dist_fn == 'max_corr':
-                feat_dist = me.max_cross_corr(feat1, feat2)
+                feat_dist = me.max_cross_corr(feat1, feat2, device)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=opt.lr)
-    t.train(data_loader, model, criterion, optimizer, opt)
-
-
+    t.train(data_loader, model, criterion, optimizer, device, opt)
 
     print('complete')
     return
