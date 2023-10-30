@@ -1,7 +1,14 @@
+import os
+
+import matplotlib.pyplot as plt
+import numpy as np
+
 import torch
 import torch.nn as nn
 import torch.fft as fft
 import torch.nn.functional as F
+
+os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 
 def label_distance(labels_1, labels_2, dist_fn='l1', label_temperature=0.1):
@@ -86,10 +93,61 @@ def batched_max_cross_corr(x, y, device):
     return dist
 
 
-
 if __name__ == '__main__':
-    batch_size = 4
-    label1 = torch.randn((batch_size, 10))
-    label2 = torch.randn((batch_size, 10))
-    labels, label_index = label_distance(label1, label2)
-    print(labels)
+    # batch_size = 4
+    # label1 = torch.randn((batch_size, 10))
+    # label2 = torch.randn((batch_size, 10))
+    # labels, label_index = label_distance(label1, label2)
+    # print(labels)
+
+    device = 'cpu'
+
+    fs = 1000
+    t = np.arange(0, 1, 1 / fs)
+    target_length = 200
+
+    #
+    # original sin waves
+    #
+    freq1 = 5
+    sin_wave1 = np.sin(2 * np.pi * freq1 * t)
+    sin_wave1 = sin_wave1[:target_length]
+    freq2 = 20
+    sin_wave2 = np.sin(2 * np.pi * freq2 * t)
+    sin_wave2 = sin_wave2[:target_length]
+    freq3 = 50
+    sin_wave3 = np.sin(2 * np.pi * freq3 * t)
+    sin_wave3 = sin_wave3[:target_length]
+
+    sin_arr = np.stack([sin_wave1, sin_wave2, sin_wave3])
+
+    #
+    # shifted sin waves
+    #
+    shift = 5
+    freq1 = 5
+    sin_wave1 = np.sin(2 * np.pi * freq1 * t + shift)
+    sin_wave1 = sin_wave1[:target_length]
+    freq2 = 20
+    sin_wave2 = np.sin(2 * np.pi * freq2 * t + shift)
+    sin_wave2 = sin_wave2[:target_length]
+    freq3 = 50
+    sin_wave3 = np.sin(2 * np.pi * freq3 * t + shift)
+    sin_wave3 = sin_wave3[:target_length]
+
+    sin_arr2 = np.stack([sin_wave1, sin_wave2, sin_wave3])
+
+    plt.plot(sin_arr[0, :])
+    plt.plot(sin_arr2[0, :])
+    plt.show()
+
+    sin_tensor1 = torch.FloatTensor(sin_arr)
+    sin_tensor2 = sin_tensor1.clone()
+    feat_dist = batched_max_cross_corr(sin_tensor1, sin_tensor2, device)
+    print(feat_dist)
+
+    sin_tensor3 = torch.roll(sin_tensor2, shifts=2, dims=1)
+    feat_dist = batched_max_cross_corr(sin_tensor1, sin_tensor3, device)
+    print(feat_dist)
+
+    print('Complete')

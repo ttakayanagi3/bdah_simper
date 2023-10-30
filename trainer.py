@@ -9,6 +9,7 @@ import torch.nn.functional as F
 import preprocess as p
 import models as m
 import metrics as me
+import loss as l
 import trainer as t
 import mlflow
 
@@ -72,14 +73,15 @@ def train(data_loader, model, criterion, optimizer, device, opt):
                         # feat_dist = me.max_cross_corr(feat1, feat2, device)
                     else:
                         feat_dist = 9999
-                    labels_soft = F.softmax(labels, dim=0)
-                    feat_dist_soft = F.softmax(feat_dist, dim=0)
-                    # labels_numpy = labels_soft.detach().cpu().numpy()
-                    # feat_dist_numpy = feat_dist_soft.detach().cpu().numpy()
+                    gen_infoNCE_loss = l.generalized_InfoNCE(feat_dist, labels)
+                    loss += gen_infoNCE_loss
 
-                    _cross_entropy = -labels_soft * torch.log(feat_dist_soft)
-                    cross_entropy = torch.sum(_cross_entropy)
-                    loss += cross_entropy
+                    # labels_soft = F.softmax(labels, dim=0)
+                    # feat_dist_soft = F.softmax(feat_dist, dim=0)
+                    #
+                    # _cross_entropy = -labels_soft * torch.log(feat_dist_soft)
+                    # cross_entropy = torch.sum(_cross_entropy)
+                    # loss += cross_entropy
 
                     # labels_numpy = labels.detach().cpu().numpy()
                     # feat_dist_numpy = feat_dist.detach().cpu().numpy()

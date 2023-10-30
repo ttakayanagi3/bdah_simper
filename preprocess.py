@@ -66,7 +66,9 @@ def batched_arbitrary_speed(frames, num_diff_speeds, speed_range, opt):
 def arbitrary_speed_subsample(frames, speed, opt):
     frame_len = frames.shape[1]
     interp_frames = []
-    extract_time_frames_length = 50
+    # extract_time_frames_length = 100
+    # extract_time_frames_length = 60
+    extract_time_frames_length = opt.extract_time_frames
     for i, each_speed in enumerate(speed):
         frame = frames[i].view(frame_len, -1).T.unsqueeze(0)
         target_frame_len = int(frame_len // each_speed)

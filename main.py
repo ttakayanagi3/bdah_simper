@@ -52,7 +52,8 @@ def load_mnist(opt, train_dype='train', base_dir='./data', need_sampling=True,
 
 
 def main():
-    FPS = 30
+    # FPS = 30
+    FPS = 50
     LENGTH_SEC = 5
     NUM_FRAMES = FPS * LENGTH_SEC
     MAX_SPEED = 3
@@ -72,10 +73,11 @@ def main():
     parser.add_argument("--SSL_FRAMES", type=int, default=NUM_FRAMES // MAX_SPEED)
     parser.add_argument("--IMG_SIZE", type=int, default=IMG_SIZE)
     parser.add_argument("--CHANNELS", type=int, default=CHANNELS)
+    parser.add_argument("--extract_time_frames", type=int, default=80)
     parser.add_argument("--lr", type=float, default=2e-3, help="Learning Rate")
     parser.add_argument("--DEBUG", type=int, default=0)
     parser.add_argument("--num_workers", type=int, default=1)
-    parser.add_argument("--experiment_name", type=str, default='SimPer_exp1')
+    parser.add_argument("--experiment_name", type=str, default='SimPer_exp3 FPS 50, Seq Length 80')
 
     #
     #
@@ -139,7 +141,8 @@ def main():
             feat1 = feats[:half_of_num_arguments]
             feat2 = feats[half_of_num_arguments:]
             if opt.feat_dist_fn == 'max_corr':
-                feat_dist = me.max_cross_corr(feat1, feat2, device)
+                # feat_dist = me.max_cross_corr(feat1, feat2, device)
+                feat_dist = me.batched_max_cross_corr(feat1, feat2, device)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=opt.lr)

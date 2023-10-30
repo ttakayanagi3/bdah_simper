@@ -55,14 +55,14 @@ class Featurizer(nn.Module):
         sequence = x.shape[2]
         img_size = x.shape[3:]
 
-        new_order = (0, 2, 1, 3, 4)
+        new_order = (0, 2, 1, 3, 4)  # Batch, Sequence, Channel, Height, Width
         x_trans = x.permute(new_order)
         new_shape = (channels, img_size[0], img_size[1])
-        x_trans = x_trans.reshape(-1, *new_shape)
+        x_trans = x_trans.reshape(-1, *new_shape)  # Batch x Sequence, Channel, Height, Width
         out = layer(x_trans)
         img_size = out.shape[2:]
         out = out.reshape(-1, sequence, channels, img_size[0], img_size[1])
-        out = out.permute(0, 2, 1, 3, 4)
+        out = out.permute(0, 2, 1, 3, 4)  # Batch, Channel, Sequence, Height, Width
         return out
 
 
