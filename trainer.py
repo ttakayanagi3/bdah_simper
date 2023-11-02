@@ -1,5 +1,6 @@
 import os
 
+import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
 import torch
@@ -73,7 +74,8 @@ def train(data_loader, model, criterion, optimizer, device, opt):
                         # feat_dist = me.max_cross_corr(feat1, feat2, device)
                     else:
                         feat_dist = 9999
-                    gen_infoNCE_loss = l.generalized_InfoNCE(feat_dist, labels)
+                    # gen_infoNCE_loss = l.generalized_InfoNCE(feat_dist, labels)
+                    gen_infoNCE_loss = l.generalized_info_nce(feat_dist, labels, 1)
                     loss += gen_infoNCE_loss
 
                     # labels_soft = F.softmax(labels, dim=0)
@@ -110,3 +112,47 @@ def train(data_loader, model, criterion, optimizer, device, opt):
             mlflow.log_metric(key='running loss', value=running_loss, step=1)
             print(f'running loss: {running_loss}')
             save_params(epoch, 'params', model)
+
+
+def plot_umap(model, data_loader, device, opt):
+    import umap
+    z_arr = []
+    speed_arr = []
+    for frames, all_speed, y_angle in tqdm.tqdm(data_loader):
+        #
+        # split all speed
+        # 2 * M -> M, M
+        #
+        num_arguments = frames.shape[1]
+        half_of_num_arguments = int(num_arguments // 2)
+        all_speed1 = all_speed[:, :half_of_num_arguments]
+        all_speed2 = all_speed[:, half_of_num_arguments:]
+        #
+        # label distance
+        #
+        all_labels, label_index = me.label_distance(all_speed1, all_speed2,
+                                                    opt.label_dist_fn, opt.label_temperature)
+        batch_size = frames.shape[0]
+        shape = frames.shape[2:]
+        transform_shape = (batch_size * num_arguments, *shape)
+        frames_transformed = frames.view(transform_shape)
+        #
+        # inference
+        #
+        mini_batch_size = frames.shape[0]
+        frames_transformed = frames_transformed.to(device)
+        all_z = model(frames_transformed, 'f')
+        all_z = all_z.view(batch_size, num_arguments, -1)
+        all_speed_transformed = all_speed.view((mini_batch_size * num_arguments, -1))
+        speed_arr_ = all_speed_transformed.detach().cpu().numpy().flatten()
+        data = all_z.detach().cpu().numpy()
+        z_arr.append(data.reshape(-1, opt.extract_time_frames))
+        speed_arr.append(speed_arr_)
+
+    z_arr = np.vstack(z_arr)
+    speed_arr = np.concatenate(speed_arr)
+
+    embedding = umap.UMAP(n_neighbors=5, min_dist=0.3, metric='correlation').fit_transform(z_arr)
+    plt.scatter(embedding[:, 0], embedding[:, 1], c=speed_arr, cmap='Blues', s=5)
+    plt.colorbar()
+    plt.show()

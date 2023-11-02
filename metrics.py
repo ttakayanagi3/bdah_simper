@@ -94,11 +94,13 @@ def batched_max_cross_corr(x, y, device):
 
 
 if __name__ == '__main__':
-    # batch_size = 4
-    # label1 = torch.randn((batch_size, 10))
-    # label2 = torch.randn((batch_size, 10))
-    # labels, label_index = label_distance(label1, label2)
-    # print(labels)
+    batch_size = 4
+    label1 = torch.randn((batch_size, 10))
+    label2 = torch.randn((batch_size, 10))
+    labels, label_index = label_distance(label1, label2)
+    prob_mat_numpy = labels.detach().cpu().numpy()
+
+    print(labels)
 
     device = 'cpu'
 

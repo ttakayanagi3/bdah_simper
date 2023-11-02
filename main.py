@@ -16,33 +16,47 @@ os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 
 def load_mnist(opt, train_dype='train', base_dir='./data', need_sampling=True,
-               data_size=1000):
+               data_size=1000, target_digit=None):
     os.makedirs(base_dir, exist_ok=True)
     mnist = ds.MNIST(root=base_dir, train=True,
                      download=True)
-    #
-    # random sampling
-    #
-    if need_sampling:
-
-        N = mnist.train_data.shape[0]
-        indicies = torch.randint(0, N, (data_size,))
-        if train_dype == 'train':
-            sampled_data = mnist.train_data[indicies]
-            sampled_label = mnist.train_labels[indicies]
-        else:
-            sampled_data = mnist.test_data[indicies]
-            sampled_label = mnist.test_labels[indicies]
+    if target_digit is not None:
+        train_data =  mnist.train_data
+        train_labels = mnist.train_labels
+        sampled_data = []
+        sampled_label = []
+        for data, label in zip(train_data, train_labels):
+            if label == target_digit:
+                sampled_data.append(data)
+                sampled_label.append(label)
+            if len(sampled_data) == data_size:
+                break
+        sampled_data = torch.stack(sampled_data)
+        sampled_label = torch.stack(sampled_label)
     else:
-    #
-    # in this case, all data are used
-    #
-        if train_dype == 'train':
-            sampled_data = mnist.train_data[:]
-            sampled_label = mnist.train_labels[:]
+        #
+        # random sampling
+        #
+        if need_sampling:
+
+            N = mnist.train_data.shape[0]
+            indicies = torch.randint(0, N, (data_size,))
+            if train_dype == 'train':
+                sampled_data = mnist.train_data[indicies]
+                sampled_label = mnist.train_labels[indicies]
+            else:
+                sampled_data = mnist.test_data[indicies]
+                sampled_label = mnist.test_labels[indicies]
         else:
-            sampled_data = mnist.test_data[:]
-            sampled_label = mnist.test_labels[:]
+        #
+        # in this case, all data are used
+        #
+            if train_dype == 'train':
+                sampled_data = mnist.train_data[:]
+                sampled_label = mnist.train_labels[:]
+            else:
+                sampled_data = mnist.test_data[:]
+                sampled_label = mnist.test_labels[:]
     #
     # generate frequency
     #
@@ -59,6 +73,7 @@ def main():
     MAX_SPEED = 3
     IMG_SIZE = 28
     CHANNELS = 1
+    UMAP = False
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--min_freq", type=float, default=0.5, help="minimum frequency")
@@ -66,7 +81,12 @@ def main():
     parser.add_argument("--random_phase", type=int, default=1, help="1: apply random phase, 0: default")
     parser.add_argument("--FPS", type=int, default=FPS)
     parser.add_argument("--LENGTH_SEC", type=int, default=LENGTH_SEC)
-    parser.add_argument("--batch_size", type=int, default=4, help="size of mini-batches")
+    # parser.add_argument("--batch_size", type=int, default=4, help="size of mini-batches")
+    if UMAP:
+        parser.add_argument("--batch_size", type=int, default=2, help="size of mini-batches")
+    else:
+        parser.add_argument("--batch_size", type=int, default=2, help="size of mini-batches")
+    # parser.add_argument("--batch_size", type=int, default=8, help="size of mini-batches")
     parser.add_argument("--n_epochs", type=int, default=15, help="epochs")
     parser.add_argument("--NUM_SELF_CON_SIMPER", type=int, default=10)
     parser.add_argument("--MAX_SPEED", type=int, default=MAX_SPEED)
@@ -74,21 +94,27 @@ def main():
     parser.add_argument("--IMG_SIZE", type=int, default=IMG_SIZE)
     parser.add_argument("--CHANNELS", type=int, default=CHANNELS)
     parser.add_argument("--extract_time_frames", type=int, default=80)
-    parser.add_argument("--lr", type=float, default=2e-3, help="Learning Rate")
+    # parser.add_argument("--lr", type=float, default=2e-3, help="Learning Rate")
+    parser.add_argument("--lr", type=float, default=1e-3, help="Learning Rate")
     parser.add_argument("--DEBUG", type=int, default=0)
     parser.add_argument("--num_workers", type=int, default=1)
-    parser.add_argument("--experiment_name", type=str, default='SimPer_exp3 FPS 50, Seq Length 80')
+    # parser.add_argument("--experiment_name", type=str, default='FPS 50, Seq Length 80, Lr 1e-3, Batch size 4')
+    parser.add_argument("--experiment_name", type=str, default='FPS 50, Seq Length 80, Lr 1e-3, Batch size 2, model2')
 
     #
     #
     parser.add_argument("--label_dist_fn", type=str, default='l1')
     parser.add_argument("--feat_dist_fn", type=str, default='max_corr')
-    parser.add_argument("--label_temperature", type=float, default=0.1)
+    parser.add_argument("--label_temperature", type=float, default=1)
+    # parser.add_argument("--label_temperature", type=float, default=0.1)
 
     opt = parser.parse_args()
     print(opt)
+    if UMAP:
+        train_data, train_label, train_freq = load_mnist(opt, train_dype='train', target_digit=3, data_size=50)
+    else:
+        train_data, train_label, train_freq = load_mnist(opt, train_dype='train')
 
-    train_data, train_label, train_freq = load_mnist(opt, train_dype='train')
     dataset = p.CustomDataset(train_data, train_label, train_freq, opt)
     # dataset = p.CustomDataset(train_data, train_label, train_freq, opt, debug=True)
     # data_loader = DataLoader(dataset=dataset, batch_size=opt.batch_size)
@@ -101,6 +127,13 @@ def main():
     torch.backends.cudnn.deterministic = True
 
     model = m.SimPer(opt)
+
+    if UMAP:
+        import umap
+        param = torch.load('./params/model_0014.pth')
+        model.load_state_dict(param)
+        # model.to('cpu')
+
     model.to(device)
     if opt.DEBUG == 1:
         import seaborn as sns
@@ -133,8 +166,23 @@ def main():
         transform_shape = (mini_batch_size * num_arguments, *shape)
         frames_transformed = frames.view(transform_shape)
         frames_transformed = frames_transformed.to(device)
+        # frames_transformed = frames_transformed.to('cpu')
         all_z = model(frames_transformed, 'f')
+
+        if UMAP:
+            t.plot_umap(model, data_loader, device, opt)
+            # all_speed_transformed = all_speed.view((mini_batch_size * num_arguments, -1))
+            # all_speed_arr = all_speed_transformed.detach().cpu().numpy().flatten()
+            # data = all_z.detach().cpu().numpy()
+            # embedding = umap.UMAP(n_neighbors=5, min_dist=0.3, metric='correlation').fit_transform(data)
+            # # plt.scatter(embedding[:, 0], embedding[:, 1], c=all_speed_arr, cmap='Spectral', s=5)
+            # plt.scatter(embedding[:, 0], embedding[:, 1], c=all_speed_arr, cmap='Blues', s=5)
+            # # plt.scatter(embedding[:, 0], embedding[:, 1])
+            # plt.colorbar()
+            # plt.show()
+
         all_z = all_z.view(mini_batch_size, num_arguments, -1)
+
 
         for feats, labels in zip(all_z, all_labels):
             # print(feats, labels)

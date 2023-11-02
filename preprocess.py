@@ -37,9 +37,9 @@ def gen_rotating_samples(x, y, opt):
         x_rotate = F.rotate(x_, angles[i])
         x_rotate = x_rotate.numpy()
         new_x.append(x_rotate)
-
+    new_x_arr = np.array(new_x)
     y_angle = torch.FloatTensor(angles) * np.pi / 180.0
-    new_x_tensor = torch.FloatTensor(new_x).squeeze()
+    new_x_tensor = torch.FloatTensor(new_x_arr).squeeze()
 
     return new_x_tensor, y_angle
 
@@ -143,7 +143,7 @@ def transform_simper(frames, opt, debug=False):
 
 class CustomDataset(Dataset):
     def __init__(self, X, y_label, y_freq, opt,
-                 need_preprocess=True, need_transform=True, debug=False):
+                 need_preprocess=True, need_transform=True, debug=False, invariant_transform=True):
         self.X = X
         self.y_label = y_label
         self.y_freq = y_freq
@@ -151,6 +151,7 @@ class CustomDataset(Dataset):
         self.need_preprocess = need_preprocess
         self.need_transform = need_transform
         self.debug = debug
+        self.invariant_transform = invariant_transform
         print(f'debug_mode: {self.debug}')
 
     def __len__(self):

@@ -7,8 +7,11 @@ class Featurizer(nn.Module):
     def __init__(self, n_outputs):
         super(Featurizer, self).__init__()
         self.conv0 = nn.Conv3d(1, 64, (5, 3, 3), padding=(2, 1, 1))
+        self.conv0_2 = nn.Conv3d(64, 64, (5, 3, 3), padding=(2, 1, 1))
         self.conv1 = nn.Conv3d(64, 128, (5, 3, 3), padding=(2, 1, 1))
+        self.conv1_2 = nn.Conv3d(128, 128, (5, 3, 3), padding=(2, 1, 1))
         self.conv2 = nn.Conv3d(128, 128, (5, 3, 3), padding=(2, 1, 1))
+        self.conv2_2 = nn.Conv3d(128, 128, (5, 3, 3), padding=(2, 1, 1))
         self.conv3 = nn.Conv3d(128, 1, (1, 1, 1))
 
         self.bn0 = nn.BatchNorm3d(64)
@@ -39,9 +42,11 @@ class Featurizer(nn.Module):
 
     def forward(self, x):
         x = F.relu(self.bn0(self.conv0(x)))
+        x = F.relu(self.bn0(self.conv0_2(x)))
         x = self.time_distributed(x, self.pool0)
 
         x = F.relu(self.bn1(self.conv1(x)))
+        x = F.relu(self.bn1(self.conv1_2(x)))
         x = self.time_distributed(x, self.pool1)
 
         x = F.relu(self.bn3(self.conv3(x)))
@@ -110,8 +115,8 @@ class SimPer(nn.Module):
 
 if __name__ == '__main__':
     batch_size = 16
-    sequence = 5
-    img_size = 16
+    sequence = 20
+    img_size = 28
     channels = 1
     shape = (batch_size, channels, sequence, img_size, img_size)
     x = torch.randn(shape)
