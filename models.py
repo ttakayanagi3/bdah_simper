@@ -42,15 +42,15 @@ class Featurizer(nn.Module):
 
     def forward(self, x):
         x = F.relu(self.bn0(self.conv0(x)))
-        x = F.relu(self.bn0(self.conv0_2(x)))
-        x = self.time_distributed(x, self.pool0)
+        # x = F.relu(self.bn0(self.conv0_2(x)))
+        x = self.time_distributed_(x, self.pool0)
 
         x = F.relu(self.bn1(self.conv1(x)))
-        x = F.relu(self.bn1(self.conv1_2(x)))
-        x = self.time_distributed(x, self.pool1)
+        # x = F.relu(self.bn1(self.conv1_2(x)))
+        x = self.time_distributed_(x, self.pool1)
 
         x = F.relu(self.bn3(self.conv3(x)))
-        x = self.time_distributed(x, self.pool3)
+        x = self.time_distributed_(x, self.pool3)
 
         x = self.flatten(x)
         return x
@@ -69,6 +69,25 @@ class Featurizer(nn.Module):
         out = out.reshape(-1, sequence, channels, img_size[0], img_size[1])
         out = out.permute(0, 2, 1, 3, 4)  # Batch, Channel, Sequence, Height, Width
         return out
+
+    def time_distributed_(self, x, layer):
+        #
+        # Original x dimension
+        # (batch, channel, sequence, height, width)
+        #
+        batch_size, channels, timesteps, height, width = x.size()
+
+        x_trans = x.view(batch_size * timesteps, channels, height, width)
+        out = layer(x_trans)
+        height = out.shape[2]
+        width = out.shape[3]
+        # img_size = out.shape[2:]
+        # out = out.reshape(-1, sequence, channels, img_size[0], img_size[1])
+        # out = out.permute(0, 2, 1, 3, 4)  # Batch, Channel, Sequence, Height, Width
+        out = out.view(batch_size, timesteps, channels, height, width)
+        out = out.permute(0, 2, 1, 3, 4).contiguous()
+        return out
+
 
 
 class MLP(nn.Module):

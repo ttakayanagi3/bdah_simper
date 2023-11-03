@@ -1,0 +1,2 @@
+Start Time,Duration,Run ID,Name,Source Type,Source Name,User,Status,loss,running loss,val_loss
+2023-11-03 11:39:40,,9bc1e242b5db465d9fb3c13f339addb5,,LOCAL,F:/omscs/CSE6250_BigData_for_Health_Informatics/homeworks/bdah_simper/main.py,resor,RUNNING,2.2104852411330826,2.187973505182073,2.177569711116023

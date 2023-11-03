@@ -11,7 +11,7 @@ import torch.nn.functional as F
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 
-def label_distance(labels_1, labels_2, dist_fn='l1', label_temperature=0.1):
+def label_distance(labels_1, labels_2, debug, dist_fn='l1', label_temperature=0.1):
     # soft_max = nn.Softmax(dim=1)
     if dist_fn == 'l1':
         dist_mat = -torch.abs(labels_1[:, :, None] - labels_2[:, None, :])
@@ -19,7 +19,8 @@ def label_distance(labels_1, labels_2, dist_fn='l1', label_temperature=0.1):
         dist_mat = -torch.abs(labels_1[:, :, None] - labels_2[:, None, :]) ** 2
 
     prob_mat = F.softmax(dist_mat / label_temperature, dim=-1)
-    # prob_mat_numpy = prob_mat.detach().cpu().numpy()
+    if debug == 1:
+        prob_mat_numpy = prob_mat.detach().cpu().numpy()
     true_index = torch.argmax(prob_mat, dim=1)
     # true_index_numpy = true_index.detach().cpu().numpy()
 
@@ -97,7 +98,8 @@ if __name__ == '__main__':
     batch_size = 4
     label1 = torch.randn((batch_size, 10))
     label2 = torch.randn((batch_size, 10))
-    labels, label_index = label_distance(label1, label2)
+    debug = 1
+    labels, label_index = label_distance(label1, label2, debug)
     prob_mat_numpy = labels.detach().cpu().numpy()
 
     print(labels)
