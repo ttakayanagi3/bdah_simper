@@ -1,0 +1,19 @@
+name: simper_torch
+channels:
+  - pytorch
+  - defaults
+dependencies:
+  - python=3.7
+  - pytorch>=1.3.0
+  - torchvision
+  - cudatoolkit>=9.2    # mac OS users should comment out this (for CPU only) or build from the source
+  - scikit-learn
+  - numpy
+  - scipy
+  - pandas
+  - seaborn
+  - tqdm
+  - matplotlib
+  - pip
+  - pip:
+    - mlflow

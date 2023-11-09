@@ -16,8 +16,8 @@ import trainer as t
 import mlflow
 
 
-def save_params(epoch, file_path, model):
-    file_name = "model_{:04d}.pth".format(epoch)
+def save_params(epoch, file_path, model, opt):
+    file_name = "{}_{:04d}.pth".format(opt.model_name, epoch)
     if not os.path.exists(file_path):
         os.makedirs(file_path, exist_ok=True)
     file_path_ = os.path.join(file_path, file_name)
@@ -120,7 +120,7 @@ def train(data_loader, model, criterion, optimizer, device, opt, val_data_loader
             losses.append(running_loss)
             mlflow.log_metric(key='running loss', value=running_loss, step=1)
             print(f'running loss: {running_loss}')
-            save_params(epoch, 'params', model)
+            save_params(epoch, 'params', model, opt)
 
 
 def plot_umap(model, data_loader, device, opt):

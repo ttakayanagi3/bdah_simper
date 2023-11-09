@@ -78,7 +78,7 @@ def main():
     MAX_SPEED = 3
     IMG_SIZE = 28
     CHANNELS = 1
-    UMAP = True
+    UMAP = False
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--min_freq", type=float, default=0.5, help="minimum frequency")
@@ -101,12 +101,12 @@ def main():
     parser.add_argument("--extract_time_frames", type=int, default=90)
     # parser.add_argument("--lr", type=float, default=2e-3, help="Learning Rate")
     parser.add_argument("--lr", type=float, default=1.5e-3, help="Learning Rate")
-    parser.add_argument("--DEBUG", type=int, default=1)
+    parser.add_argument("--DEBUG", type=int, default=0)
     parser.add_argument("--num_workers", type=int, default=1)
     # parser.add_argument("--experiment_name", type=str, default='FPS 50, Seq Length 80, Lr 1e-3, Batch size 4')
     # parser.add_argument("--experiment_name", type=str, default='FPS 50, Seq Length 80, Lr 1.5e-3, Batch size 6, model1')
     parser.add_argument("--experiment_name", type=str, default='train_eval3')
-
+    parser.add_argument("--model_name", type=str, default='SimPer_invariant_preprocess')
     #
     #
     parser.add_argument("--label_dist_fn", type=str, default='l1')
