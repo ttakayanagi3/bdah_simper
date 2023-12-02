@@ -1,5 +1,5 @@
 # SimPer: Simple Self-Supervised Learning of Periodic Targets paper reproduction
-This repository was created as part of an assignment for Georgia Tech's OMSCS course CSE 6250: Big Data for Health Informatics. For more information, visit: CSE 6250: Big Data for Health Informatics
+This repository was created as part of an assignment for Georgia Tech's OMSCS course [CSE 6250: Big Data for Health Informatics](https://omscs.gatech.edu/cse-8803-special-topics-big-data-for-health-informatics).
 We attempted to replicate the Original Paper using PyTorch. We will conduct the learning of Periodic features using the SimPer Framework, targeting the Rotating Digits dataset.
 
 Original Paper Link
@@ -19,5 +19,6 @@ conda env create -f environment.yaml
 ```
 
 # How To Train
-main.py is a program for training. Make sure that UMAP is equal to False in the training phase.During learning, the process can be monitored using MLFlow. From the perspective of computational load, the use of CUDA is recommended.
+main.py is a program for training. Make sure that UMAP is equal to False in the training phase.During learning, the process can be monitored using MLFlow. \\
+From the perspective of computational load, the use of CUDA is recommended.
 Once the training is completed, you can switch UMAP into True. Then, UMAP or t-SNE is visualized.
