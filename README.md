@@ -21,4 +21,4 @@ conda env create -f environment.yaml
 # How To Train
 main.py is a program for training. Make sure that UMAP is equal to False in the training phase.During learning, the process can be monitored using MLFlow.
 From the perspective of computational load, the use of CUDA is recommended.
-Once the training is completed, you can switch UMAP into True. Then, UMAP or t-SNE is visualized.
+Once the training is completed, you can switch UMAP into True. Then, features are visualized through UMAP or t-SNE.
