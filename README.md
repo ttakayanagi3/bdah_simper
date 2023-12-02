@@ -13,7 +13,11 @@ This is a visualization by umap.
 ![umap](https://github.com/ttakayanagi3/bdah_simper/assets/146202307/21a3e336-d7cb-4862-8f61-f73b2c573f24)
 
 # environment
-
+To set up the environment, unvironment.yaml can be available using conda command.
 ```
 conda env create -f environment.yaml
 ```
+
+# How To Train
+main.py is a program for training. Make sure that UMAP is equal to False in the training phase.During learning, the process can be monitored using MLFlow. From the perspective of computational load, the use of CUDA is recommended.
+Once the training is completed, you can switch UMAP into True. Then, UMAP or t-SNE is visualized.
