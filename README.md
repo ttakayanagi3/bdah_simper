@@ -14,3 +14,6 @@ This is a visualization by umap.
 
 # environment
 
+```
+conda env create -f environment.yaml
+```
