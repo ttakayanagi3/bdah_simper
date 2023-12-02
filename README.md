@@ -6,10 +6,10 @@ Original Paper Link
 SimPer: Simple Self-Supervised Learning of Periodic Targets
 (https://arxiv.org/abs/2210.03115)
 
-Below is a visualization of the features obtained from our learning, using t-SNE.
+Here are figures to visualize the periodic features obtained from our learning, using t-SNE and UMAP.
 ![t-sne](https://github.com/ttakayanagi3/bdah_simper/assets/146202307/58d41def-a2c0-4c4f-92ad-0fa1e8f10520)
 
-This is a visualization by umap.
+
 ![umap](https://github.com/ttakayanagi3/bdah_simper/assets/146202307/21a3e336-d7cb-4862-8f61-f73b2c573f24)
 
 # environment
@@ -19,6 +19,6 @@ conda env create -f environment.yaml
 ```
 
 # How To Train
-main.py is a program for training. Make sure that UMAP is equal to False in the training phase.During learning, the process can be monitored using MLFlow. \\
+main.py is a program for training. Make sure that UMAP is equal to False in the training phase.During learning, the process can be monitored using MLFlow.
 From the perspective of computational load, the use of CUDA is recommended.
 Once the training is completed, you can switch UMAP into True. Then, UMAP or t-SNE is visualized.
