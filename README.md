@@ -13,4 +13,8 @@ This is a visualization by umap.
 ![umap](https://github.com/ttakayanagi3/bdah_simper/assets/146202307/21a3e336-d7cb-4862-8f61-f73b2c573f24)
 
 # environment
+You can use conda to set up the environment for this repository.
+```
+conda env create -f environment.yaml
+```
 
